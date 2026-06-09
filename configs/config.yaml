@@ -1,0 +1,6 @@
+project_name: "credit_card_fraud_detection"
+seed: 42
+
+mlflow:
+  tracking_uri: "http://localhost:5000"
+  experiment_name: "fraud_detection_comparison"
