@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 from src.utils.config import AppConfig
 from src.utils.logger import get_logger
@@ -34,3 +35,34 @@ def run(cfg: AppConfig):
 
     df = pd.read_csv(path)
     validate_raw(df, cfg)
+
+    fraud_rate = df[cfg.data.target_col].mean() * 100
+    logger.info(f"Fraud rate: {fraud_rate:.3f}%  "
+                f"({df[cfg.data.target_col].sum():,} fraud / "
+                f"{(df[cfg.data.target_col] == 0).sum():,} legit)")
+
+    X = df.drop(columns=[cfg.data.target_col] + cfg.data.drop_cols)
+    y = df[cfg.data.target_col]
+
+    feature_names = list(X.columns)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y,
+        test_size=cfg.data.test_split,
+        stratify=y,
+        random_state=cfg.seed,
+    )
+
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train, y_train,
+        test_size=cfg.data.val_split / ( 1 - cfg.data.test_split),
+        stratify=y_train,
+    )
+
+    logger.info(f"Split -> train: {len(X_train):,} | val: {len(X_val):,} | test: {len(X_test):,}")
+
+    return (
+        X_train.values, X_val.values, X_test.values,
+        y_train.values, y_val.values, y_test.values,
+        feature_names,
+    )
