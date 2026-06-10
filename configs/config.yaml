@@ -1,6 +1,13 @@
 project_name: "credit_card_fraud_detection"
 seed: 42
 
+data:
+  raw_path: "data/creditcard.csv"
+  test_split: 0.20
+  val_split: 0.10
+  target_col: "Class"          # 0 = legit, 1 = fraud_detection
+  drop_cols: [ "Time" ]
+
 mlflow:
   tracking_uri: "http://localhost:5000"
   experiment_name: "fraud_detection_comparison"

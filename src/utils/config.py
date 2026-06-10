@@ -1,7 +1,16 @@
 from pathlib import Path
+from typing import List
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class dataConfig(BaseModel):
+    raw_path: str
+    test_split: float = Field(gt=0, lt=1)
+    val_split: float = Field(gt=0, lt=1)
+    target_col: str
+    drop_cols: List[str]
 
 class MLflowConfig(BaseModel):
     tracking_uri: str
@@ -10,6 +19,7 @@ class MLflowConfig(BaseModel):
 class AppConfig(BaseModel):
     project_name: str
     seed: int
+    data: dataConfig
     mlflow: MLflowConfig
 
 

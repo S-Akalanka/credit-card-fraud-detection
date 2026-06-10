@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 
-def get_logger(name: str, log_file: str | None = None) -> logging.Logger:
+def get_logger(name: str, log_file: str | Path |None = None) -> logging.Logger:
 
     logger = logging.getLogger(name)
 

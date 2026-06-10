@@ -1,6 +1,8 @@
 import mlflow
 
 from pathlib import Path
+
+from src.pipelines import ingest
 from src.utils.config import load_config
 from src.utils.logger import get_logger
 
@@ -19,6 +21,7 @@ def run_training():
     mlflow.set_experiment(cfg.mlflow.experiment_name)
 
     logger.info("Ingesting data...")
+    ingest.run(cfg)
 
 if __name__ == "__main__":
     run_training()
