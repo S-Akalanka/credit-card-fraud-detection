@@ -12,6 +12,37 @@ mlflow:
   tracking_uri: "http://localhost:5000"
   experiment_name: "fraud_detection_comparison"
 
+models:
+  enabled: ['BaseModel', 'logistic_regression']
+
+  logistic_regression:
+    max_iter: 1000
+    solver: "lbfgs"
+
+  random_forest:
+    n_estimators: 300
+    max_depth: 12
+    min_samples_leaf: 2
+    n_jobs: -1                 # use all CPU cores
+
+  xgboost:
+    n_estimators: 500
+    max_depth: 6
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    n_jobs: -1
+    eval_metric: "aucpr"       # optimize for PR-AUC directly
+
+  lightgbm:
+    n_estimators: 500
+    max_depth: 8
+    learning_rate: 0.05
+    num_leaves: 63
+    subsample: 0.8
+    n_jobs: -1
+    verbose: -1                # suppress LightGBM console spam
+
 imbalance:
   strategies: ["none", "class_weight", "smote"]
   smote_k_neighbors: 5

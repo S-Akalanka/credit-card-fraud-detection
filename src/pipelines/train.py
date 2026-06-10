@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from src.models.base import BaseModel
-from src.pipelines import ingest
+from src.pipelines import ingest, preprocess
 from src.utils.config import load_config, AppConfig
 from src.utils.logger import get_logger
 
@@ -34,10 +34,29 @@ def run_one(
     (X_tr, X_v, X_te,
      y_tr, y_v, y_te,
      class_weight_dict) = preprocess.run(
-        cfg, strategy,
+        cfg, model, strategy,
         X_train, X_val, X_test,
         y_train, y_val, y_test,
     )
+
+    with mlflow.start_run(run_name=run_name):
+        mlflow.set_tags({"model": model.name, "strategy": strategy})
+
+        # Fit
+        model.fit(X_tr, y_tr, X_v, y_v, class_weight_dict)
+
+        # Log hyperparams
+        mlflow.log_params({
+            "model": model.name,
+            "strategy": strategy,
+            "train_size": len(X_tr),
+            **model.get_params(),
+        })
+
+        # Val metrics — used for model selection
+        y_val_prob = model.predict_proba(X_v)
+        y_val_pred = (y_val_prob >= 0.5).astype(int)
+
 
 
 def run_training():
