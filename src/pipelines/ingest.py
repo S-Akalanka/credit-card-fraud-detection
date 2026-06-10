@@ -28,7 +28,7 @@ def validate_raw(df: pd.DataFrame, cfg: AppConfig) -> None:
     logger.info(f"Validation passed - {len(df):,} rows, {df.shape[1]} cols")
 
 
-def run(cfg: AppConfig):
+def run(cfg: AppConfig) -> tuple:
 
     path = f'{PROJECT_ROOT}/{cfg.data.raw_path}'
     logger.info(f"Loading data from {path}")

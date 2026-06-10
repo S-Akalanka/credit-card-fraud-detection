@@ -5,7 +5,7 @@ import yaml
 from pydantic import BaseModel, Field
 
 
-class dataConfig(BaseModel):
+class DataConfig(BaseModel):
     raw_path: str
     test_split: float = Field(gt=0, lt=1)
     val_split: float = Field(gt=0, lt=1)
@@ -16,11 +16,16 @@ class MLflowConfig(BaseModel):
     tracking_uri: str
     experiment_name: str
 
+class ImbalanceConfig(BaseModel):
+    strategies: List[str]
+    smote_k_neighbors: int = Field(gt=0)
+
 class AppConfig(BaseModel):
     project_name: str
     seed: int
-    data: dataConfig
+    data: DataConfig
     mlflow: MLflowConfig
+    imbalance: ImbalanceConfig
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

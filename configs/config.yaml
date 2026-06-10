@@ -11,3 +11,7 @@ data:
 mlflow:
   tracking_uri: "http://localhost:5000"
   experiment_name: "fraud_detection_comparison"
+
+imbalance:
+  strategies: ["none", "class_weight", "smote"]
+  smote_k_neighbors: 5
