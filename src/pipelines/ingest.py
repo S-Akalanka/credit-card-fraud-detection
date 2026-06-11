@@ -8,7 +8,8 @@ from src.utils.logger import get_logger
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-logger = get_logger(__name__, log_file=f'{PROJECT_ROOT}/logs/pipelines.log')
+LOG_PATH = PROJECT_ROOT / 'logs' / 'pipelines.log'
+logger = get_logger(__name__, log_file=LOG_PATH)
 
 def validate_raw(df: pd.DataFrame, cfg: AppConfig) -> None:
     expected_cols = [ f'V{i}' for i in range(1, 29) ] + ['Time', 'Amount','Class']

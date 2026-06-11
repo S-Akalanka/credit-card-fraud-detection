@@ -2,13 +2,19 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.features.engineer import engineer
 from src.utils.config import load_config
 from src.utils.logger import get_logger
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-STORE_DIR = Path("outputs/feature_store")
-logger = get_logger(__name__, log_file="logs/pipeline.log")
+cfg = load_config()
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+RAW_DATA_DIR = PROJECT_ROOT/cfg.data.raw_path
+STORE_DIR = Path(PROJECT_ROOT/cfg.data.processed_path)
+LOG_PATH = PROJECT_ROOT / 'logs' / 'pipelines.log'
+
+logger = get_logger(__name__, log_file=LOG_PATH)
 
 
 class FeatureStore:
@@ -25,7 +31,7 @@ class FeatureStore:
         size_mb = path.stat().st_size / 1e6
         logger.info(
             f"Feature store: saved version='{version}' | "
-            f"shape={df.shape} | size={size_mb:.1f}MB | path={path}"
+            f"shape={df.shape} | size={size_mb:.1f}MB | path=...{str(path)[-54:]}"
         )
         return path
 
@@ -59,7 +65,6 @@ class FeatureStore:
 
 def build(version: str = "latest") -> None:
 
-    cfg = load_config()
     store = FeatureStore()
 
     if store.exists(version):
@@ -69,7 +74,12 @@ def build(version: str = "latest") -> None:
 
     logger.info(f"Building feature store version='{version}'...")
 
-    df_raw = pd.read_csv(cfg.data.raw_path)
+    df_raw = pd.read_csv(RAW_DATA_DIR)
+    df_engineered = engineer(df_raw)
+    store.save(df_engineered, version=version)
+
+    meta = store.metadata(version)
+    logger.info(f"Feature store ready: {meta}")
 
 
 if __name__ == "__main__":

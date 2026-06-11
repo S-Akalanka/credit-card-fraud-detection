@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class DataConfig(BaseModel):
     raw_path: str
+    processed_path: str
     test_split: float = Field(gt=0, lt=1)
     val_split: float = Field(gt=0, lt=1)
     target_col: str
