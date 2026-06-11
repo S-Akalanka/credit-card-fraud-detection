@@ -57,14 +57,15 @@ def run_one(
         y_val_prob = model.predict_proba(X_v)
         y_val_pred = (y_val_prob >= 0.5).astype(int)
 
+        ######
 
 
 def run_training():
 
     cfg = load_config()
 
-    mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
+    # mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
+    # mlflow.set_experiment(cfg.mlflow.experiment_name)
 
     logger.info("Ingesting data...")
     X_train, X_val, X_test, y_train, y_val, y_test, _ = ingest.run(cfg)
