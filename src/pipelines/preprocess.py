@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
@@ -6,7 +8,12 @@ from src.models.base import BaseModel
 from src.utils.config import AppConfig
 from src.utils.logger import get_logger
 
-logger = get_logger(__name__, log_file="logs/pipelines.log")
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+LOG_PATH = PROJECT_ROOT / 'logs' / 'pipelines.log'
+
+logger = get_logger(__name__, log_file=LOG_PATH)
 
 
 def run(

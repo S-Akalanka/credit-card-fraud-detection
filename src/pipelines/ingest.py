@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+from src.features.store import FeatureStore
 from src.utils.config import AppConfig
 from src.utils.logger import get_logger
 
@@ -11,38 +12,49 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 LOG_PATH = PROJECT_ROOT / 'logs' / 'pipelines.log'
 logger = get_logger(__name__, log_file=LOG_PATH)
 
-def validate_raw(df: pd.DataFrame, cfg: AppConfig) -> None:
-    expected_cols = [ f'V{i}' for i in range(1, 29) ] + ['Time', 'Amount','Class']
-    missing_cols = set(df.columns) - set(expected_cols)
+def validate(df: pd.DataFrame, cfg: AppConfig) -> None:
+    required = (
+        [cfg.data.target_col]
+        + [f"V{i}" for i in range(1, 29)]
+        + ["Hour", "Amount_log"]
+    )
+    missing = set(required) - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"Missing columns in feature store: {missing}\n"
+            f"Rebuild with: python -m src.features.store"
+        )
 
-    if missing_cols:
-        raise ValueError(f'Missing columns in raw data: {missing_cols}')
+    nulls = df.isnull().sum()
+    if nulls.any():
+        raise ValueError(f"Null values in feature store:\n{nulls[nulls > 0]}")
 
-    null_counts = df.isnull().sum()
-    if null_counts.any():
-        raise ValueError(f'Missing values in raw data: {null_counts[null_counts > 0]}')
+    class_vals = set(df[cfg.data.target_col].unique())
+    if not class_vals.issubset({0, 1}):
+        raise ValueError(f"Target must be binary 0/1, got: {class_vals}")
 
-    class_counts = df[cfg.data.target_col].value_counts()
-    if set(class_counts.index) != {0, 1}:
-        raise ValueError(f"Target column must be binary 0/1, got: {class_counts.index.tolist()}")
-
-    logger.info(f"Validation passed - {len(df):,} rows, {df.shape[1]} cols")
+    logger.info(f"Validation passed — {len(df):,} rows, {df.shape[1]} cols")
 
 
-def run(cfg: AppConfig) -> tuple:
+def run(cfg: AppConfig, version: str = "latest") -> tuple:
 
-    path = f'{PROJECT_ROOT}/{cfg.data.raw_path}'
-    logger.info(f"Loading data from {path}")
+    store = FeatureStore()
 
-    df = pd.read_csv(path)
-    validate_raw(df, cfg)
+    # Auto-build store if it doesn't exist yet
+    if not store.exists(version):
+        logger.info(f"Feature store version '{version}' not found — building now...")
+        from src.features.store import build
+        build(version)
+
+    df = store.load(version)
+    validate(df, cfg)
 
     fraud_rate = df[cfg.data.target_col].mean() * 100
     logger.info(f"Fraud rate: {fraud_rate:.3f}%  "
                 f"({df[cfg.data.target_col].sum():,} fraud / "
                 f"{(df[cfg.data.target_col] == 0).sum():,} legit)")
 
-    X = df.drop(columns=[cfg.data.target_col] + cfg.data.drop_cols)
+    X = df.drop(columns=[cfg.data.target_col])
     y = df[cfg.data.target_col]
 
     feature_names = list(X.columns)

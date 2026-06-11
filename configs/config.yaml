@@ -7,7 +7,7 @@ data:
   test_split: 0.20
   val_split: 0.10
   target_col: "Class"          # 0 = legit, 1 = fraud_detection
-  drop_cols: [ "Time" ]
+  drop_cols: [ ]
 
 mlflow:
   tracking_uri: "http://localhost:5000"
