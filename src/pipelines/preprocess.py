@@ -30,7 +30,7 @@ def run(
 
     logger.info(f"Preprocessing - strategy: {strategy}")
 
-    if model.name in  cfg.model.enabled:
+    if model.name in  cfg.models.scale_features_for:
         scaler = StandardScaler()
         amount_col = -1         # Amount is always last column after dropping Time
 
