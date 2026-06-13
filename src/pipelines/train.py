@@ -5,6 +5,8 @@ from pathlib import Path
 import numpy as np
 
 from src.models.base import BaseModel
+from src.models.classifiers import BaselineModel, LogisticRegressionModel, RandomForestModel, XGBoostModel, \
+    LightGBMModel
 from src.pipelines import ingest, preprocess
 from src.utils.config import load_config, AppConfig
 from src.utils.logger import get_logger
@@ -72,6 +74,32 @@ def run_training():
 
     strategies = cfg.imbalance.strategies
 
+    # Baseline — strategy doesn't apply
+    run_one(
+        BaselineModel(cfg.seed), "none",
+        X_train, X_val, X_test,
+        y_train, y_val, y_test, cfg,
+    )
+
+    # All trained models × all strategies
+    model_classes = [
+        LogisticRegressionModel,
+        RandomForestModel,
+        XGBoostModel,
+        LightGBMModel,
+    ]
+
+    for ModelClass in model_classes:
+        for strategy in strategies:
+            run_one(
+                ModelClass(cfg),
+                strategy,
+                X_train, X_val, X_test,
+                y_train, y_val, y_test,
+                cfg,
+            )
+
+    logger.info("All experiments complete. View: mlflow ui --port 5000")
 
 
 if __name__ == "__main__":
