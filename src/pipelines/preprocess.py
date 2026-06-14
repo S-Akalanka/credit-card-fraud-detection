@@ -41,7 +41,7 @@ def run(
         X_train[:, amount_col] = scaler.fit_transform(
             X_train[:, amount_col].reshape(-1, 1)
             ).ravel()
-        X_val[:, amount_col] = scaler.fit_transform(X_val[:, amount_col].reshape(-1, 1)).ravel()
+        X_val[:, amount_col] = scaler.transform(X_val[:, amount_col].reshape(-1, 1)).ravel()
         X_test[:, amount_col] = scaler.transform(X_test[:, amount_col].reshape(-1, 1)).ravel()
 
     class_weight_dict = None
