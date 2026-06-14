@@ -24,12 +24,20 @@ class BaselineModel(BaseModel):
         _AMOUNT_IDX = 28
 
     def fit(self, X_train, y_train, X_val, y_val, class_weight_dict):
-        # V14 is index 13 (0-indexed after V1-V28)
-        # Flag if V14 below the 5th percentile of training fraud V14 values
-        self._threshold = np.percentile(X_train[y_train == 1, 13], 5)
+        self._thresholds = [np.percentile(X_train[y_train == 1, 13], 70),
+                            np.percentile(X_train[y_train == 1, 3], 50),
+                            np.percentile(X_train[y_train == 1, 12], 80),
+                            np.percentile(X_train[y_train == 1, 10], 30),
+                            np.percentile(X_train[y_train == 1, 9], 80)]
 
     def predict_proba(self, X):
-        return (X[:, 13] <= self._threshold).astype(float)
+        return (
+                (X[:, 13] <= self._thresholds[0]) &
+                (X[:, 3] >= self._thresholds[1]) &
+                (X[:, 12] <= self._thresholds[2]) &
+                (X[:, 10] >= self._thresholds[3]) &
+                (X[:, 9] <= self._thresholds[4])
+        ).astype(float)
 
     def get_params(self):
         return {"rule": "amount <= 5th_percentile", "threshold": self._threshold}
