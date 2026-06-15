@@ -33,7 +33,7 @@ def validate(df: pd.DataFrame, cfg: AppConfig) -> None:
     if not class_vals.issubset({0, 1}):
         raise ValueError(f"Target must be binary 0/1, got: {class_vals}")
 
-    logger.info(f"Validation passed — {len(df):,} rows, {df.shape[1]} cols")
+    logger.info(f"Validation passed - {len(df):,} rows, {df.shape[1]} cols")
 
 
 def run(cfg: AppConfig, version: str = "latest") -> tuple:
