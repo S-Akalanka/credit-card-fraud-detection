@@ -64,7 +64,7 @@ def make_objective(X_train, y_train, X_val, y_val, cfg):
 
     return objective
 
-def run_tuning(n_trials: int = 75) -> None:
+def run_tuning(run_version: str = "v1", n_trials: int = 75) -> None:
 
     cfg = load_config()
     mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
@@ -123,7 +123,7 @@ def run_tuning(n_trials: int = 75) -> None:
         mlflow.log_metric("val_pr_auc", best_val_pr_auc)
         mlflow.log_metrics({f"test_{k}": v for k, v in test_metrics.items()})
         mlflow.log_metric("n_trials", n_trials)
-        mlflow.set_tags({"model": "xgboost", "strategy": "optuna_tuned"})
+        mlflow.set_tags({"model": "xgboost", "strategy": "optuna_tuned", "run_version": run_version})
 
         mlflow.sklearn.log_model(
             final_model,
@@ -135,4 +135,6 @@ def run_tuning(n_trials: int = 75) -> None:
 
 
 if __name__ == "__main__":
-    run_tuning()
+
+    RUN_VERSION = "V3.2"
+    run_tuning(run_version=RUN_VERSION)

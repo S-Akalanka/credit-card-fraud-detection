@@ -30,6 +30,7 @@ def run_one(
     y_val: np.ndarray,
     y_test: np.ndarray,
     cfg: AppConfig,
+    run_version: str,
 ) -> None:
     run_name = f"{model.name}__{strategy}"
     logger.info(f"Starting run: {run_name}")
@@ -44,7 +45,7 @@ def run_one(
     )
 
     with mlflow.start_run(run_name=run_name):
-        mlflow.set_tags({"model": model.name, "strategy": strategy})
+        mlflow.set_tags({"model": model.name, "strategy": strategy, "run_version": run_version})
 
         # Fit
         model.fit(X_tr, y_tr, X_v, y_v, class_weight_dict)
@@ -57,13 +58,13 @@ def run_one(
             **model.get_params(),
         })
 
-        # Val metrics — used for model selection
+        # Val metrics - used for model selection
         y_val_prob = model.predict_proba(X_v)
         y_val_pred = (y_val_prob >= 0.5).astype(int)
         val_metrics = compute_metrics(y_v, y_val_pred, y_val_prob)
         mlflow.log_metrics({f"val_{k}": v for k, v in val_metrics.items()})
 
-        # Test metrics — honest final performance, not used for selection
+        # Test metrics - honest final performance, not used for selection
         y_test_prob = model.predict_proba(X_te)
         y_test_pred = (y_test_prob >= 0.5).astype(int)
         test_metrics = compute_metrics(y_te, y_test_pred, y_test_prob)
@@ -80,7 +81,7 @@ def run_one(
         logger.info(f"  test PR-AUC={test_metrics['pr_auc']:.4f}")
 
 
-def run_training():
+def run_training(run_version: str = "v1"):
 
     cfg = load_config()
 
@@ -92,11 +93,12 @@ def run_training():
 
     strategies = cfg.imbalance.strategies
 
-    # Baseline — strategy doesn't apply
+    # Baseline - strategy doesn't apply
     run_one(
         BaselineModel(), "none",
         X_train, X_val, X_test,
-        y_train, y_val, y_test, cfg,
+        y_train, y_val, y_test,
+        cfg, run_version
     )
 
     # All trained models × all strategies
@@ -114,11 +116,13 @@ def run_training():
                 strategy,
                 X_train, X_val, X_test,
                 y_train, y_val, y_test,
-                cfg,
+                cfg, run_version
             )
 
-    logger.info("All experiments complete. View: mlflow ui --port 5000")
+    logger.info("All experiments complete.")
 
 
 if __name__ == "__main__":
-    run_training()
+
+    RUN_VERSION = "V3.2"
+    run_training(run_version=RUN_VERSION)
