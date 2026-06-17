@@ -12,8 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 LOG_PATH = PROJECT_ROOT / 'logs' / 'pipelines.log'
 logger = get_logger(__name__, log_file=LOG_PATH)
 
-FEATURE_COLS = [f"V{i}" for i in range(1, 29)] + ["Amount"]
-
+FEATURE_COLS = [f"V{i}" for i in range(1, 29)] + ["Hour", "Amount_log"]
 
 class FraudPredictor:
 
@@ -30,7 +29,7 @@ class FraudPredictor:
         exp    = client.get_experiment_by_name(cfg.mlflow.experiment_name)
         runs   = client.search_runs(
             experiment_ids=[exp.experiment_id],
-            filter_string=f"tags.run_version = '{cfg.serving.run_version}' and tags.mlflow.parentRunId = ''",
+            filter_string="tags.model = 'xgboost' AND tags.strategy = 'none'",
             order_by=["metrics.val_pr_auc DESC"],
             max_results=1,
         )
@@ -46,9 +45,17 @@ class FraudPredictor:
         logger.info(f"Loaded: {self.run_name}  threshold={self.threshold:.3f}  "
                     f"val_pr_auc={best.data.metrics.get('val_pr_auc', 0):.4f}")
 
-    def predict(self, features: dict, threshold: float | None = None) -> dict:
+    def predict(self, features: dict, threshold=None) -> dict:
+        # Engineer features from raw inputs
+        amount = features["Amount"]
+        time_secs = features.get("Time", 0)
+
+        features["Hour"] = (time_secs / 3600) % 24
+        features["Amount_log"] = np.log1p(amount)
+        # Amount stays for the model
 
         X = np.array([[features[f] for f in FEATURE_COLS]])
+
         prob      = float(self.model.predict_proba(X)[0, 1])
         t         = threshold if threshold is not None else self.threshold
         is_fraud  = prob >= t
