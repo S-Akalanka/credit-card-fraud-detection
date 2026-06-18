@@ -124,5 +124,5 @@ def run_training(run_version: str = "v1"):
 
 if __name__ == "__main__":
 
-    RUN_VERSION = "V3.2"
+    RUN_VERSION = "V4"
     run_training(run_version=RUN_VERSION)

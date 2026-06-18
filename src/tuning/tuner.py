@@ -35,7 +35,7 @@ def sample_params(trial: optuna.Trial) -> dict:
         "gamma"            : trial.suggest_float("gamma", 0, 5),
         "reg_alpha"        : trial.suggest_float("reg_alpha", 1e-8, 1.0, log=True),
         "reg_lambda"       : trial.suggest_float("reg_lambda", 1e-8, 1.0, log=True),
-        "scale_pos_weight" : trial.suggest_float("scale_pos_weight", 400, 700),
+        "scale_pos_weight": trial.suggest_float("scale_pos_weight", 550, 620),
     }
 
 def make_objective(X_train, y_train, X_val, y_val, cfg):
@@ -51,7 +51,12 @@ def make_objective(X_train, y_train, X_val, y_val, cfg):
             n_jobs=-1,
         )
 
-        model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
+        model.fit(
+            X_train, y_train,
+            eval_set=[(X_val, y_val)],
+            verbose=False,
+            early_stopping_rounds=50,
+        )
 
         y_prob = model.predict_proba(X_val)[:, 1]
         val_pr_auc = average_precision_score(y_val, y_prob)
@@ -94,8 +99,8 @@ def run_tuning(run_version: str = "v1", n_trials: int = 75) -> None:
         )
 
         best_params = study.best_params
-        best_val_pr_auc = study.best_value
-        logger.info(f"Best val_pr_auc : {best_val_pr_auc:.4f}")
+        val_pr_auc = study.best_value
+        logger.info(f"Best val_pr_auc : {val_pr_auc:.4f}")
         logger.info(f"Best params     : {best_params}")
 
         # Final model on train+val combined
@@ -120,7 +125,7 @@ def run_tuning(run_version: str = "v1", n_trials: int = 75) -> None:
         logger.info(f"Test F1     : {test_metrics['f1']:.4f}")
 
         mlflow.log_params({f"best_{k}": v for k, v in best_params.items()})
-        mlflow.log_metric("val_pr_auc", best_val_pr_auc)
+        mlflow.log_metrics({"val_pr_auc": val_pr_auc})
         mlflow.log_metrics({f"test_{k}": v for k, v in test_metrics.items()})
         mlflow.log_metric("n_trials", n_trials)
         mlflow.set_tags({"model": "xgboost", "strategy": "optuna_tuned", "run_version": run_version})
@@ -136,5 +141,5 @@ def run_tuning(run_version: str = "v1", n_trials: int = 75) -> None:
 
 if __name__ == "__main__":
 
-    RUN_VERSION = "V3.2"
+    RUN_VERSION = "V4"
     run_tuning(run_version=RUN_VERSION)
