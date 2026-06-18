@@ -3,7 +3,9 @@ from pathlib import Path
 import numpy as np
 import mlflow
 import mlflow.sklearn
+import pandas as pd
 
+from src.features.engineer import engineer
 from src.utils.config import load_config
 from src.utils.logger import get_logger
 
@@ -12,7 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 LOG_PATH = PROJECT_ROOT / 'logs' / 'pipelines.log'
 logger = get_logger(__name__, log_file=LOG_PATH)
 
-FEATURE_COLS = [f"V{i}" for i in range(1, 29)] + ["Hour", "Amount_log"]
+cfg = load_config()
 
 class FraudPredictor:
 
@@ -22,7 +24,6 @@ class FraudPredictor:
         self.run_name  = None
 
     def load(self) -> None:
-        cfg = load_config()
         mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
 
         client = mlflow.tracking.MlflowClient()
@@ -46,15 +47,9 @@ class FraudPredictor:
                     f"val_pr_auc={best.data.metrics.get('val_pr_auc', 0):.4f}")
 
     def predict(self, features: dict, threshold=None) -> dict:
-        # Engineer features from raw inputs
-        amount = features["Amount"]
-        time_secs = features.get("Time", 0)
 
-        features["Hour"] = (time_secs / 3600) % 24
-        features["Amount_log"] = np.log1p(amount)
-        # Amount stays for the model
-
-        X = np.array([[features[f] for f in FEATURE_COLS]])
+        df = pd.DataFrame([features])
+        X = engineer(df)
 
         prob      = float(self.model.predict_proba(X)[0, 1])
         t         = threshold if threshold is not None else self.threshold
